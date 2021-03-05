@@ -4,64 +4,95 @@
 
 Engine_Prolepsis : CroneEngine {
 
-  var pg;
-  var wavetable_arrays;
-  var wavetable_buffers;
-  var amp=0.3;
-  var release=0.5;
-  var pan=0;
-  var timbre=0;
+  var voiceGroup;
+  var numChannels = 8;
+  var channelGroups;
+  var channelControlBusses;
+
+  var wavetableArrays; // todo: eliminate this
+  var wavetableBuffers;
+
 
   *new { arg context, doneCallback;
     ^super.new(context, doneCallback);
   }
 
   alloc {
-    pg = ParGroup.tail(context.xg);
+    voiceGroup = ParGroup.tail(context.xg);
+    channelGroups = numChannels collect: { Group.tail(voiceGroup) };
+    channelControlBusses = numChannels collect: {
+      #[
+        timbre,
+        pressure,
+        pitchbend
+      ].collect { |sym|
+          var bus = Bus.control;
+          bus.set(0);
+          sym -> bus
+      }.asDict
+    };
         
-    SynthDef("wave", {
-      arg out, table, table_min, table_max, freq = 440, amp=amp, release=release, pan=pan;
-      //var snd = VOsc.ar(SinOsc.kr(0.125,0).range(table_min+0.1,table_max-0.1), freq);
-      var snd = VOsc.ar(table, freq);
-      var env = Env.perc(level: amp, releaseTime: release).kr(2);
-      Out.ar(out, Pan2.ar((snd * env), pan));
+    SynthDef("wave", {|gate, out, table_min, table_max, freq, vel, pan, timbre, pressure, pitchbend|
+      var t0 = table_min+0.1;
+      var t1 = table_max-0.1;
+      var snd = VOsc.ar(Wrap.ar(timbre, 0.0, 1.0).range(t0, t1), freq);
+      var env = Env.perc(level: 1.0, releaseTime: vel).kr(2);
+      Out.ar(out, Pan2.ar((snd * env), 0.0));
     }).add;
 
-    this.addCommand("noteOn", "iiff", { arg msg;
+    this.addCommand("noteOn", "iiff", { |msg|
+      var channelnum = msg[1];
+      var note = msg[2];
       var freq = msg[3];
       var vel = msg[4];
-      Synth("wave", [
-          \out, context.out_b, 
-          \table_min, wavetable_buffers.first.bufnum, 
-          \table_max, wavetable_buffers.last.bufnum,
-          \table, (wavetable_buffers.last.bufnum - wavetable_buffers.first.bufnum) * timbre,
-          \freq, freq,
-          \amp, amp, \release, vel, \pan, pan
-        ], 
-        target:pg
+
+      // initial args for this note
+      var synthArgs = [
+        \gate, 1,
+        \out, context.out_b,
+        \table_min, wavetableBuffers.first.bufnum,
+        \table_max, wavetableBuffers.last.bufnum,
+        \freq, freq,
+        \vel, vel,
+      ];
+      
+      var s = Synth.new(
+        "wave", 
+        synthArgs, 
+        target: channelGroups[channelnum]
       );
+
+      s.map(\timbre, channelControlBusses[channelnum][\timbre]);
     });
 
-    this.addCommand("noteOff", "iif", { arg msg;
+    this.addCommand("noteOff", "iif", { |msg|
+      var channelnum = msg[1];
+      var note = msg[2];
+      var releasevel = msg[3];
+      channelGroups[channelnum].set(\gate, 0);
     });
 
-    this.addCommand("amp", "f", { arg msg;
-      amp = msg[1];
-    });
-    this.addCommand("release", "f", { arg msg;
-      release = msg[1];
-    });
-    this.addCommand("pan", "f", { arg msg;
-      pan = msg[1];
-    });
-    this.addCommand("timbre", "f", { arg msg;
-      timbre = msg[1];
+    this.addCommand("timbre", "if", { |msg|
+      var channelnum = msg[1];
+      var value = msg[2];
+      channelControlBusses[channelnum][\timbre].set(value);
     });
 
+    this.addCommand("pressure", "if", { |msg|
+      var channelnum = msg[1];
+      var value = msg[2];
+      channelControlBusses[channelnum][\pressure].set(value);
+    });
+
+    this.addCommand("pitchbend", "if", { |msg|
+      var channelnum = msg[1];
+      var value = msg[2];
+      channelControlBusses[channelnum][\pitchbend].set(value);
+    });
 
     this.addCommand("loadTable", "i", {arg msg;
-    
-      wavetable_arrays = Array.fill(14, {arg i; 
+      var tableSize = 12;
+      wavetableArrays = Array.fill(tableSize, {arg i; 
         var inst = "hvoice";
         var root = this.class.filenameSymbol.asString.dirname ++ "/wavetables";
         var wavePath = (root ++ "/AKWF_" ++ inst ++ "/AKWF_" ++ inst ++ "_" ++ ((i+1).asStringToBase(10, 4)) ++ ".wav").standardizePath;
@@ -80,8 +111,8 @@ Engine_Prolepsis : CroneEngine {
         }
       });
 
-      wavetable_buffers = Buffer.allocConsecutive(14, context.server, 2048, 1, { |buf, i|
-        buf.sendCollection(wavetable_arrays[i], 0, 0, { |buf|
+      wavetableBuffers = Buffer.allocConsecutive(tableSize, context.server, 2048, 1, { |buf, i|
+        buf.sendCollection(wavetableArrays[i], 0, 0, { |buf|
           buf.query.postln;
         });
       });
@@ -92,7 +123,10 @@ Engine_Prolepsis : CroneEngine {
   }
 
   free {
-    pg.free;
-    wavetable_buffers.do(_.free);
+    voiceGroup.free;
+    wavetableArrays.do(_.free);
+    wavetableBuffers.do(_.free);
+    channelGroups.do(_.free);
+    channelControlBusses.do({|dict| dict do: _.free });
   }
 }

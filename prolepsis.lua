@@ -58,7 +58,7 @@ end
 
 local function mpe_timbre(chan, val)
   t = val/127
-  engine.timbre(t)
+  engine.timbre(chan, t)
   state.dots[chan].y = t
 end
 
