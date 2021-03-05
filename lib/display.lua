@@ -32,7 +32,6 @@ end
 
 local buf = ""
 local buf_a = ""
-local buf_b = ""
 
 function redraw()
   screen.clear()
@@ -40,28 +39,34 @@ function redraw()
   -- screen.level(1)
   -- screen.rect(0,0,128,64)
   -- screen.fill()
-  screen.poke(0,1,128,63,buf)
-  if math.random() < 0.2 then
-    screen.poke(1,1,127,62,buf)
+  offset = 0
+  shift = false
+  if shift then
+    for k, dot in pairs(state.dots) do
+      if dot.ended == true then
+        dot.ended = false
+        offset = offset + 1
+      end
+    end
   end
+  screen.poke(offset,1,128,63,buf)
   screen.blend_mode('xor')
-  screen.level(2)
+  screen.level(math.random(2,3))
   for k, dot in pairs(state.dots) do
     if dot.active then
-      screen.circle((dot.x - 0.25) * 2.5 * 128, 16 + (1 - dot.y) * 48, dot.r * 10)
+      screen.circle((dot.x_coarse + 0.2 * dot.x_fine - 0.25) * 2.5 * 128, 16 + (1 - dot.y) * 48, dot.r * 10)
     end
     screen.stroke()
   end
   buf = buf_a
-  buf_b = buf_a
   buf_a = screen.peek(0,0,128,63)
   
   screen.aa(1)
   screen.blend_mode('add')
-  screen.level(15)
+  screen.level(math.random(13,15))
   for k, dot in pairs(state.dots) do
     if dot.active then
-      screen.circle((dot.x - 0.25) * 2.5 * 128, 16 + (1 - dot.y) * 48, dot.r * 10)
+      screen.circle((dot.x_coarse + 0.2 * dot.x_fine - 0.25) * 2.5 * 128, 16 + (1 - dot.y) * 48, dot.r * 10)
     end
     screen.stroke()
   end

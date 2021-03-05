@@ -22,7 +22,7 @@ engine.name = "Prolepsis"
 local state = {}
 state.dots = {}
 for i=1,Prolepsis.voiceCount do
-  state.dots[i] = { x = 0, y = 0, r = 0, active = false }
+  state.dots[i] = { x_coarse = 0, x_fine = 0, y = 0, r = 0, active = false }
 end
 
 function enc(n, delta)
@@ -34,9 +34,8 @@ function key(n, z)
 end
 
 local function note_on(chan, note_num, vel)
-  print(chan)
   engine.noteOn(chan, note_num, MusicUtil.note_num_to_freq(note_num), vel)
-  state.dots[chan].x = note_num/127
+  state.dots[chan].x_coarse = note_num/127
   state.dots[chan].y = 0
   state.dots[chan].r = vel
   state.dots[chan].active = true
@@ -45,17 +44,22 @@ end
 local function note_off(chan, note_num, vel)
   engine.noteOff(chan, note_num, vel)
   state.dots[chan].active = false
+  state.dots[chan].ended = true
 end
 
 local function mpe_pressure(chan, val)
-  state.dots[chan].r = val/100
+  state.dots[chan].r = val/127
 end
 
 local function mpe_pitch(chan, val)
+  st = (val - 8192)/4096 -- range -2 to 2 semitones
+  state.dots[chan].x_fine = st
 end
 
 local function mpe_timbre(chan, val)
-  state.dots[chan].y = val/127
+  t = val/127
+  engine.timbre(t)
+  state.dots[chan].y = t
 end
 
 local function midi_event(data)
@@ -88,7 +92,9 @@ end
 
 
 function init()
-  
+
+  engine.loadTable();
+
   Display.init(state)
 
   midi_in_device = midi.connect(1)
@@ -102,7 +108,6 @@ function init()
     midi_in_device = midi.connect(value)
     midi_in_device.event = midi_event
   end}
-
 
 
 end
