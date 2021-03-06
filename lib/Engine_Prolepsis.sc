@@ -7,7 +7,7 @@ Engine_Prolepsis : CroneEngine {
   var voiceGroup;
   var numChannels = 8;
   var channelGroups;
-  var channelControlBusses;
+  var channelControlBuses;
 
   var wavetableBuffers;
 
@@ -19,7 +19,7 @@ Engine_Prolepsis : CroneEngine {
   alloc {
     voiceGroup = ParGroup.tail(context.xg);
     channelGroups = numChannels collect: { Group.tail(voiceGroup) };
-    channelControlBusses = numChannels collect: {
+    channelControlBuses = numChannels collect: {
       #[
         timbre,
         pressure,
@@ -36,7 +36,12 @@ Engine_Prolepsis : CroneEngine {
       var t0 = table_min+0.1;
       var t1 = table_max-0.1;
       var snd = VOsc.ar(Clip.ar(timbre, 0.0, 1.0).range(t0, t1), freq);
-      var env = Env.adsr(attackTime: 0.25 - (vel * 0.2), decayTime: vel * 0.125, sustainLevel: 0.8, releaseTime: 0.2 + vel * 0.25);
+      var env = Env.adsr(
+        attackTime: vel.linexp(0, 1.0, 0.25, 0.05), 
+        decayTime: vel.linexp(0, 1.0, 0, 0.125), 
+        sustainLevel: vel.linexp(0, 1.0, 1.0, 0.8), 
+        releaseTime: release
+      );
       var amp = EnvGen.kr(env, gate, doneAction: Done.freeSelf);
       Out.ar(out, Pan2.ar((snd * amp * (0.15 + 0.85 * pressure)), pan));
     }).add;
@@ -64,7 +69,8 @@ Engine_Prolepsis : CroneEngine {
         target: channelGroups[channelnum]
       );
 
-      channelControlBusses[channelnum].keysValuesDo({|key, value|
+      // attach MPE channel continuous control buses
+      channelControlBuses[channelnum].keysValuesDo({|key, value|
         synth.map(key, value);
 			});
     });
@@ -73,26 +79,26 @@ Engine_Prolepsis : CroneEngine {
       var channelnum = msg[1];
       var note = msg[2];
       var release = msg[3];
-      channelControlBusses[channelnum][\release].set(release);
+      channelControlBuses[channelnum][\release].setSynchronous(release.linexp(0, 1.0, 7.0, 0.05));
       channelGroups[channelnum].set(\gate, 0);
     });
 
     this.addCommand("timbre", "if", { |msg|
       var channelnum = msg[1];
       var value = msg[2];
-      channelControlBusses[channelnum][\timbre].set(value);
+      channelControlBuses[channelnum][\timbre].set(value);
     });
 
     this.addCommand("pressure", "if", { |msg|
       var channelnum = msg[1];
       var value = msg[2];
-      channelControlBusses[channelnum][\pressure].set(value);
+      channelControlBuses[channelnum][\pressure].set(value);
     });
 
     this.addCommand("pitchbend", "if", { |msg|
       var channelnum = msg[1];
       var value = msg[2];
-      channelControlBusses[channelnum][\pitchbend].set(value);
+      channelControlBuses[channelnum][\pitchbend].set(value);
     });
 
     this.addCommand("loadTable", "i", {arg msg;
@@ -132,6 +138,6 @@ Engine_Prolepsis : CroneEngine {
     voiceGroup.free;
     wavetableBuffers.do(_.free);
     channelGroups.do(_.free);
-    channelControlBusses.do({|dict| dict do: _.free });
+    channelControlBuses.do({|dict| dict do: _.free });
   }
 }

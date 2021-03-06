@@ -2,9 +2,12 @@ prolepsis
 =========
 
 wavetable synth engine for the [monome norns](https://monome.org/norns/) with [MIDI Polyphonic Expression](https://d30pueezughrda.cloudfront.net/campaigns/mpe/mpespec.pdf) control capability
-march 2021
+
+march 2021<br>
+Medford, MA, USA
 
 ## WARNINGS:
+
 * ~ *work in progress* ~
 * first supercollider project, expect nonsense
 * name not final
@@ -20,6 +23,7 @@ march 2021
 * crow
 
 ### project core goals
+
 * an expressively playable self-contained polysynth 
    * with heavy inspiration from the [MWII/XT/XTk](https://www.waldorfmusic.com/phocadownload/Microwave%202%20Downloads/Documentation/mw2_XT_XTk_eng.pdf) architecture
    * supporting [MPE](https://d30pueezughrda.cloudfront.net/campaigns/mpe/mpespec.pdf) and non-MPE capable MIDI controllers
@@ -30,16 +34,18 @@ march 2021
 * MPE > CV via [crow]()
 
 ### project probable eventual goals
+
 * drive synthesis modes of [Just Friends](https://www.whimsicalraps.com/products/just-friends) and [W/Syn](https://llllllll.co/t/mannequins-w-2-beta-testing/34091) via crow i2c
 * arc parameter control, LFOs
 * will think of some grid sequencing capabilities eventually
 
 ### references/thanks
+
 * wavetables
    * [Adventure Kid Waveform Pack](https://github.com/KristofferKarlAxelEkstrand/AKWF-FREE) (CC0)
 * videos
     * Eli Fieldsteel's SuperCollider Tutorials [23: Wavetable Synthesis, Part I](https://youtu.be/8EK9sq_9gFI) and [24: Wavetable Synthesis, Part II](https://www.youtube.com/watch?v=7nrUBbmY1hE)
-* norns engines studied as reference
+* norns engines studied 
    * [Molly the Polly](https://llllllll.co/t/molly-the-poly/21090) from @markwheeler 
    * [ack](https://github.com/antonhornquist/ack) from @antonhornquist
    * [PolyPerc](https://github.com/monome/norns/blob/8047a363a28759cd4fa2c94f3c7e4b78f01eec88/crone/classes/engines/CroneEngine_PolyPerc.sc) from @tehn
@@ -49,6 +55,7 @@ march 2021
    * https://gist.github.com/xavriley/ce1becd7f2d97d93aced74e88ae7ba54
    * https://github.com/vagost/HybFMSynth/blob/master/PolySynths.sc
    * https://github.com/baruchtomer/MegazordSynth/blob/master/megazord-synth.scd
+   * https://gist.github.com/catfact/ac108ff6f08306bad4f81c376572b8b3
 
 
 ### license

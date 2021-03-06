@@ -150,11 +150,11 @@ function init()
   params:add{type = "control", id = "test3", name = "test 3", controlspec = specs.test3, action = function(val) state.params[3] = val end}
 
   params:add_separator("display")
-  
+
   params:add{type = "option", id = "display_mode", name = "mode", options = {"circles", "wavetables"}, default = 1}
   params:add{type = "option", id = "display_enc_show_values", name = "show enc values", options = {"always", "after change", "never"}, default = 1}
   params:add{type = "option", id = "display_enc_show_names", name = "show enc names", options = {"always", "after change", "never"}, default = 1}
-  params:add{type = "option", id = "display_enc_show_duration", name = "time after change", min = 0.1, max = 8.0, default = 3}
+  params:add{type = "number", id = "display_enc_show_duration", name = "time after change", min = 0.1, max = 8.0, default = 3}
 
 end
 
