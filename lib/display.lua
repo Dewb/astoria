@@ -35,6 +35,7 @@ local buf_a = ""
 
 function redraw()
   screen.clear()
+  screen.aa(0)
   -- screen.blend_mode('multiply')
   -- screen.level(1)
   -- screen.rect(0,0,128,64)
@@ -51,6 +52,7 @@ function redraw()
   end
   screen.poke(offset,1,128,63,buf)
   screen.blend_mode('xor')
+  screen.line_width(1)
   screen.level(math.random(2,3))
   for k, dot in pairs(state.dots) do
     if dot.active then
@@ -70,8 +72,25 @@ function redraw()
     end
     screen.stroke()
   end
-  screen.aa(0)
+  screen.move(0,0)
+  screen.line(41,0)
+  screen.move(43,0)
+  screen.line(84,0)
+  screen.move(86,0)
+  screen.line(127,0)
+  screen.line_width(1)
+  screen.level(3)
+  screen.stroke()
 
+  screen.move(0,1)
+  screen.line(0 + state.params[1] * 41, 1)
+  screen.move(43,1)
+  screen.line(43 + state.params[2] * 41, 1)
+  screen.move(86,1)
+  screen.line(86 + state.params[3] * 41, 1)
+  screen.line_width(2)
+  screen.level(6)
+  screen.stroke()
 
   screen.update()
 end
