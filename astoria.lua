@@ -1,4 +1,4 @@
--- Prolepsis
+-- Astoria
 -- 1.0.0 @dewb
 --
 -- MPE wavetable synth
@@ -16,15 +16,15 @@
 -- e3: change display mode
 --
 
-local Prolepsis = include("prolepsis/lib/prolepsis_engine")
-local Display = include("prolepsis/lib/display")
+local Astoria = include("astoria/lib/astoria_engine")
+local Display = include("astoria/lib/display")
 
 local ControlSpec = require 'controlspec'
 local Formatters = require 'formatters'
 local MusicUtil = require "musicutil"
 local tab = require "tabutil"
 
-engine.name = "Prolepsis"
+engine.name = "Astoria"
 
 local specs = {}
 
@@ -35,7 +35,7 @@ specs.test3 = ControlSpec.new(0, 1, "lin", 0, 0.5, "")
 local state = {}
 state.notes = {}
 state.params = { 0.5, 0.5, 0.5 }
-for i=1,Prolepsis.voiceCount do
+for i=1,Astoria.voiceCount do
   state.notes[i] = { x_coarse = 0, x_fine = 0, y = 0, r = 0, raw_note = 0, raw_x = 0, raw_y = 0, raw_z = 0, raw_vel = 0, active = false }
 end
 
@@ -153,7 +153,7 @@ function init()
   end
   params:add{type = "option", id = "channel_mode", name = "channel mode", default = 1, options = channel_mode_list}
 
-  modulator_list = {"pitchbend", "timbre", "poly pressure", "channel pressure", "off"}
+  modulator_list = {"off", "channel pitchbend", "channel timbre", "channel pressure", "poly pressure"}
   for i = 1,127 do
     table.insert(modulator_list,"CC "..i)
   end

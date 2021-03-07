@@ -1,4 +1,4 @@
-prolepsis
+astoria
 =========
 
 wavetable synth engine for the [monome norns](https://monome.org/norns/) with [MIDI Polyphonic Expression](https://d30pueezughrda.cloudfront.net/campaigns/mpe/mpespec.pdf) control capability
@@ -12,47 +12,39 @@ Medford, MA, USA
 * first supercollider project, expect nonsense
 * name not final
 
-### todo
+## todo
 
-* change name
+* ~~change name~~
 * fix danging synth voices
 * load new wavetables from params menu
 * hook up pitchbend
-* implement simple synth architecture and controlspecs/params (osc, filter, chorus)
-* prepare preview release
-* implement rest of synth architecture (2x wavetable osc, sub osc, 2x filter + chorus per voice)
-* implement synth parameters and mod matrix, expose to norns knobs/params
-* fix dropped note offs (might require norns midi changes)
+* implement simple synth architecture and basic controlspecs/params (osc, filter, chorus)
 * make everything work with non-MPE voice allocation
 * move MPE logic out of main script into a lua library
+* prepare preview release
+* implement rest of synth architecture (2x wavetable osc, sub osc, 2x filter + chorus per voice)
+* implement full synth parameters and mod matrix, expose to norns knobs/params
+* fix dropped note offs (might require norns midi changes)
 * crow
 
-### project core goals
+## project core goals
 
 * an expressively playable self-contained polysynth 
-   * supporting [MPE](https://d30pueezughrda.cloudfront.net/campaigns/mpe/mpespec.pdf) and non-MPE capable MIDI controllers
+   * supporting both [MPE](https://d30pueezughrda.cloudfront.net/campaigns/mpe/mpespec.pdf) and non-MPE MIDI controllers
 * a simple but rich wavetable synthesis engine
    * sound and parameterization inspired by the architecture of classic wavetable hardware synthesizers from the 1990s
-   * a small curated set of algorithmically generated and file-based wavetables based on my personal sensibilities
-   * allow users to self-install arbitrary single-cycle wavetable collections
-* MPE > CV via [crow]()
+   * a modest built-in set of algorithmically generated and file-based wavetables 
+   * plus, allow users to self-install their own single-cycle wavetable collections
+* MPE expression to control voltage via [crow]()
 
-### project probable eventual goals
+## project probable eventual goals
 
 * drive synthesis modes of [Just Friends](https://www.whimsicalraps.com/products/just-friends) and [W/Syn](https://llllllll.co/t/mannequins-w-2-beta-testing/34091) via crow i2c
 * arc parameter control, LFOs
 * will think of some grid sequencing capabilities eventually
+* contribute MPE implementation to other polysynths
 
-### hardware support
-
-* ??? tbd
-* test hardware includes:
-    * [Sensel Morph](https://morph.sensel.com)
-    * [Keith McMillen QuNexus](https://www.keithmcmillen.com/products/qunexus/)
-    * [ExpressiveE Touché](https://www.expressivee.com/1-touche)
-    * [Arturia Keystep Pro](https://www.arturia.com/products/hybrid-synths/keystep-pro/overview)
-
-### references/thanks
+## references/thanks
 
 * wavetables
    * [Adventure Kid Waveform Pack](https://github.com/KristofferKarlAxelEkstrand/AKWF-FREE) (CC0)
@@ -69,8 +61,29 @@ Medford, MA, USA
    * https://github.com/vagost/HybFMSynth/blob/master/PolySynths.sc
    * https://github.com/baruchtomer/MegazordSynth/blob/master/megazord-synth.scd
    * https://gist.github.com/catfact/ac108ff6f08306bad4f81c376572b8b3
+* conversations on the norns study group discord
 
+## q&a
 
-### license
+Q. *Where did the name come from*?<br/>
+A. The [houseboat](https://en.wikipedia.org/wiki/Astoria_(recording_studio)), or the [muppet](https://muppet.fandom.com/wiki/Astoria).
+
+Q. *what/why is the norns sound computer?*<br/>
+A. [Some good non-exhaustive answers here](https://github.com/p3r7/awesome-monome-norns#what--why-is-norns).
+
+Q. *what hardware has this been tested with?*<br/>
+A. planned support matrix so far looks like:
+   * norns
+      * norns retail (stock Pi CM3)
+      * norns retail (Pi CM3+ upgrade) [TODO]
+      * norns DIY shield with Pi 3B+ [TODO]
+   * controllers:
+      * [Sensel Morph](https://morph.sensel.com)
+      * [Keith McMillen QuNexus](https://www.keithmcmillen.com/products/qunexus/) [TODO]
+      * [ExpressiveE Touché](https://www.expressivee.com/1-touche) [TODO]
+      * [Arturia Keystep Pro](https://www.arturia.com/products/hybrid-synths/keystep-pro/overview) [TODO]
+      * [Nord Electro 2](https://www.nordkeyboards.com/products/nord-electro-2) [TODO]
+
+## license
 
 [GPLv3](LICENSE.txt)
