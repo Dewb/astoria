@@ -33,17 +33,45 @@ Engine_Prolepsis : CroneEngine {
     };
         
     SynthDef("wave", {|gate, out, table_min, table_max, freq, vel, pan, timbre, pressure, pitchbend, release|
+
+      var lagAmount = 0.001;
       var t0 = table_min+0.1;
       var t1 = table_max-0.1;
-      var snd = VOsc.ar(Clip.ar(timbre, 0.0, 1.0).range(t0, t1), freq);
-      var env = Env.adsr(
+      var oscA, oscB, env, amp, signal, mix;
+  
+      timbre = Lag.kr(timbre, lagAmount);
+      pressure = Lag.kr(pressure, lagAmount);
+      pitchbend = Lag.kr(pitchbend, lagAmount);
+
+      oscA = VOsc.ar(
+        bufpos: Clip.ar(timbre, 0.0, 1.0).range(t0, t1), 
+        freq: freq
+      );
+      // oscB = VOsc.ar(
+      //   bufpos: Clip.ar(timbre, 0.0, 1.0).range(t0 + 0.2, t1 - 0.2), 
+      //   freq: freq + 0.5
+      // );
+      env = Env.adsr(
         attackTime: vel.linexp(0, 1.0, 0.25, 0.05), 
-        decayTime: vel.linexp(0, 1.0, 0, 0.125), 
-        sustainLevel: vel.linexp(0, 1.0, 1.0, 0.8), 
+        decayTime: vel.linexp(0, 1.0, 0.125, 0.05), 
+        sustainLevel: vel.linexp(0, 1.0, 1.0, 0.7), 
         releaseTime: release
       );
-      var amp = EnvGen.kr(env, gate, doneAction: Done.freeSelf);
-      Out.ar(out, Pan2.ar((snd * amp * (0.15 + 0.85 * pressure)), pan));
+      amp = EnvGen.kr(
+        envelope: env, 
+        gate: gate, 
+        levelScale: vel.linexp(0, 1.0, 1.0, 1.3),
+        doneAction: Done.freeSelf
+      );
+      signal = oscA; // 0.75 * oscA + 0.25 * oscB;
+      mix = Pan2.ar(
+        in: tanh(signal * amp.dbamp * (0.15 + 0.85 * pressure)).softclip, 
+        pos: pan
+      );
+      Out.ar(
+        bus: out, 
+        channelsArray: mix
+      );
     }).add;
 
     this.addCommand("noteOn", "iiff", { |msg|
@@ -101,7 +129,7 @@ Engine_Prolepsis : CroneEngine {
       channelControlBuses[channelnum][\pitchbend].set(value);
     });
 
-    this.addCommand("loadTable", "i", {arg msg;
+    this.addCommand("loadTable", "i", { |msg|
       var tableSize = 16;
       var wavetableArrays = Array.fill(tableSize, {arg i; 
         var inst = "hvoice";

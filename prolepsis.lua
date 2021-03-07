@@ -3,12 +3,18 @@
 --
 -- MPE wavetable synth
 --
--- E1:
--- E2:
--- E3:
--- K1:
--- K2:
--- K3:
+-- e1,e2,e3: change synth parameters
+-- k2,k3: swap parameter pages
+--
+-- k2 hold +
+-- e1: norns engine volume
+-- e2: change synth preset
+-- e3:
+--
+-- k3 hold +
+-- e2: scroll through parameter pages
+-- e3: change display mode
+--
 
 local Prolepsis = include("prolepsis/lib/prolepsis_engine")
 local Display = include("prolepsis/lib/display")
@@ -30,70 +36,94 @@ local state = {}
 state.dots = {}
 state.params = { 0.5, 0.5, 0.5 }
 for i=1,Prolepsis.voiceCount do
-  state.dots[i] = { x_coarse = 0, x_fine = 0, y = 0, r = 0, active = false }
+  state.dots[i] = { x_coarse = 0, x_fine = 0, y = 0, r = 0, raw_note = 0, raw_x = 0, raw_y = 0, raw_z = 0, raw_vel = 0, active = false }
+end
+
+local key_is_held = {0,0,0}
+function key(n, z)
+  key_is_held[n] = z
 end
 
 function enc(n, delta)
-  if n == 1 then
-    params:delta("test1", delta)
-  elseif n == 2 then
-    params:delta("test2", delta)
-  elseif n == 3 then
-    params:delta("test3", delta)
+  local kh = table.concat(key_is_held)
+  if kh == "000" then
+    if n == 1 then
+      params:delta("test1", delta)
+    elseif n == 2 then
+      params:delta("test2", delta)
+    elseif n == 3 then
+      params:delta("test3", delta)
+    end
+  elseif kh == "001" then
+    if n == 3 then
+      params:delta("display_mode", delta)
+    end
   end
 end
 
-function key(n, z)
-end
-
 local function note_on(voice, note_num, vel)
-  engine.noteOn(voice, note_num, MusicUtil.note_num_to_freq(note_num), vel)
+  engine.noteOn(voice, note_num, MusicUtil.note_num_to_freq(note_num), vel/127)
   state.dots[voice].x_coarse = note_num/127
   state.dots[voice].y = 0
-  state.dots[voice].r = vel
+  state.dots[voice].r = vel/127
   state.dots[voice].active = true
+  state.dots[voice].onset_time = util.time()
+  state.dots[voice].raw_note = note_num
+  state.dots[voice].raw_vel = vel  
 end
 
 local function note_off(voice, note_num, vel)
-  engine.noteOff(voice, note_num, vel)
+  engine.noteOff(voice, note_num, vel/127)
   state.dots[voice].active = false
   state.dots[voice].ended = true
+  state.dots[voice].raw_vel = vel
 end
 
-local function modulator_z(voice, val)
-  engine.pressure(voice, val)
-  state.dots[voice].r = val
+local function modulator_z(voice, raw, scaled)
+  engine.pressure(voice, scaled)
+  state.dots[voice].r = scaled
+  state.dots[voice].raw_z = raw
 end
 
-local function modulator_x(voice, val)
-  engine.pitchbend(voice, val)
-  state.dots[voice].x_fine = val
+local function modulator_x(voice, raw, scaled)
+  engine.pitchbend(voice, scaled)
+  state.dots[voice].x_fine = scaled
+  state.dots[voice].raw_x = raw
 end
 
-local function modulator_y(voice, val)
-  engine.timbre(voice, val)
-  state.dots[voice].y = val
+local function modulator_y(voice, raw, scaled)
+  engine.timbre(voice, scaled)
+  state.dots[voice].y = scaled
+  state.dots[voice].raw_y = raw
 end
 
 local function midi_event(data)
-  local msg = midi.to_msg(data)
-  local voice = msg.ch - 1
-       
-    if msg.type == "note_off" then
-      note_off(voice, msg.note, msg.vel / 127)
+  
+    local channel = (data[1] & 0x0f) + 1
     
-    elseif msg.type == "note_on" then
-      note_on(voice, msg.note, msg.vel / 127)
-      
-    elseif msg.type == "channel_pressure" then
-      modulator_z(voice, msg.val / 127)
+    if data[1] & 0xf0 == 0x80 then
+      note_off(channel, data[2], data[3])
+    
+    elseif data[1] & 0xf0 == 0x90 then
+      if data[3] == 0 then
+        note_off(channel, data[2], data[3])
+      else 
+        note_on(channel, data[2], data[3])
+      end
 
-    elseif msg.type == "pitchbend" then
-      modulator_x(voice, (msg.val - 8192) / 8192)
+    elseif data[1] & 0xf0 == 0xd0 then
+      -- msg.type == "channel_pressure" 
+      modulator_z(channel, data[2], data[2] / 127)
 
-    elseif msg.type == "cc" then
-      if msg.cc == 74 then
-        modulator_y(voice, msg.val / 127)
+    elseif data[1] & 0xf0 == 0xe0 then
+      -- msg.type == "pitchbend" 
+      val = data[2] + (data[3] << 7)
+      modulator_x(channel, val, (val - 8192) / 8192)
+
+    elseif data[1] & 0xf0 == 0xb0 then 
+      -- msg.type == "cc" 
+      if data[2] == 74 then
+        modulator_y(channel, data[3], data[3] / 127)
       end
     end
 
@@ -102,7 +132,7 @@ end
 
 function init()
 
-  engine.loadTable();
+  engine.loadTable(0);
 
   Display.init(state)
 
@@ -117,18 +147,13 @@ function init()
     midi_in_device.event = midi_event
   end}
 
-  params:add{type = "number", id = "midi_mode", name = "midi mode", min = 0, max = 17, default = 0, formatter = function(param)
-    value = param:get()
-    if value == 0 then 
-      return "MPE low zone"
-    elseif value == 17 
-      then return "MPE high zone"
-    else 
-      return "channel "..value
-    end
-  end}
+  channel_mode_list = {"MPE low zone", "MPE high zone", "rotating", "omni"}
+  for i = 1,16 do
+    table.insert(channel_mode_list, "channel "..i)
+  end
+  params:add{type = "option", id = "channel_mode", name = "channel mode", default = 1, options = channel_mode_list}
 
-  modulator_list = {"MPE pitchbend", "MPE timbre", "MPE pressure", "poly pressure", "channel pressure", "pitchbend", "modwheel"}
+  modulator_list = {"MPE pitchbend", "MPE timbre", "MPE pressure", "poly pressure", "channel pressure", "pitchbend",}
   for i = 2,120 do
     table.insert(modulator_list,"CC "..i)
   end
@@ -151,7 +176,7 @@ function init()
 
   params:add_separator("display")
 
-  params:add{type = "option", id = "display_mode", name = "mode", options = {"circles", "wavetables"}, default = 1}
+  params:add{type = "option", id = "display_mode", name = "mode", options = {"ripples", "debug"}, default = 1}
   params:add{type = "option", id = "display_enc_show_values", name = "show enc values", options = {"always", "after change", "never"}, default = 1}
   params:add{type = "option", id = "display_enc_show_names", name = "show enc names", options = {"always", "after change", "never"}, default = 1}
   params:add{type = "number", id = "display_enc_show_duration", name = "time after change", min = 0.1, max = 8.0, default = 3}

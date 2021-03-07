@@ -14,7 +14,7 @@ local specs = {}
 
 
 Prolepsis.specs = specs
-Prolepsis.voiceCount = 8
+Prolepsis.voiceCount = 16
 
 function Prolepsis.add_params()
 

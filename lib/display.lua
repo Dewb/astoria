@@ -35,6 +35,41 @@ local buf_a = ""
 
 function redraw()
   screen.clear()
+  mode = params:get("display_mode")
+  if mode == 1 then 
+    draw_ripples()
+  elseif mode == 2 then
+    draw_debug()
+  end
+  draw_params()
+  screen.update()
+end
+
+function draw_debug()
+  local active_voices = {}
+  for voice, data in pairs(state.dots) do
+    if data.active == true then
+      table.insert(active_voices, {voice, data.onset_time})
+    end
+  end
+  -- todo: sort by onset_time?
+  h = 11
+  for k, entry in pairs(active_voices) do
+    voice = entry[1]
+    data = state.dots[voice]
+    str = voice .. "." .. 
+      string.format("%02x",data.raw_note) .. ".".. 
+      string.format("%02x",data.raw_x) .. "." .. 
+      string.format("%02x",data.raw_y) .. "." .. 
+      string.format("%02x",data.raw_z)
+    screen.move(0,h)
+    screen.font_face(67)
+    screen.text(str)
+    h = h + 8
+  end
+end
+
+function draw_ripples()
   screen.aa(0)
   -- screen.blend_mode('multiply')
   -- screen.level(1)
@@ -72,6 +107,9 @@ function redraw()
     end
     screen.stroke()
   end
+end
+
+function draw_params()
   screen.move(0,0)
   screen.line(41,0)
   screen.move(43,0)
@@ -92,7 +130,6 @@ function redraw()
   screen.level(6)
   screen.stroke()
 
-  screen.update()
 end
 
 return Display

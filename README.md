@@ -14,10 +14,15 @@ Medford, MA, USA
 
 ### todo
 
+* change name
+* fix danging synth voices
+* load new wavetables from params menu
 * hook up pitchbend
+* implement simple synth architecture and controlspecs/params (osc, filter, chorus)
+* prepare preview release
 * implement rest of synth architecture (2x wavetable osc, sub osc, 2x filter + chorus per voice)
 * implement synth parameters and mod matrix, expose to norns knobs/params
-* load new wavetables from params menu
+* fix dropped note offs (might require norns midi changes)
 * make everything work with non-MPE voice allocation
 * move MPE logic out of main script into a lua library
 * crow
@@ -25,12 +30,11 @@ Medford, MA, USA
 ### project core goals
 
 * an expressively playable self-contained polysynth 
-   * with heavy inspiration from the [MWII/XT/XTk](https://www.waldorfmusic.com/phocadownload/Microwave%202%20Downloads/Documentation/mw2_XT_XTk_eng.pdf) architecture
    * supporting [MPE](https://d30pueezughrda.cloudfront.net/campaigns/mpe/mpespec.pdf) and non-MPE capable MIDI controllers
-      * test hardware includes the [Sensel Morph](https://morph.sensel.com), [ExpressiveE Touché](https://www.expressivee.com/1-touche), and [Arturia Keystep Pro](https://www.arturia.com/products/hybrid-synths/keystep-pro/overview)
-* with flexible wavetable sourcing
+* a simple but rich wavetable synthesis engine
+   * sound and parameterization inspired by the architecture of classic wavetable hardware synthesizers from the 1990s
    * a small curated set of algorithmically generated and file-based wavetables based on my personal sensibilities
-   * also allow users to self-install arbitrary single-cycle wavetable collections
+   * allow users to self-install arbitrary single-cycle wavetable collections
 * MPE > CV via [crow]()
 
 ### project probable eventual goals
@@ -38,6 +42,15 @@ Medford, MA, USA
 * drive synthesis modes of [Just Friends](https://www.whimsicalraps.com/products/just-friends) and [W/Syn](https://llllllll.co/t/mannequins-w-2-beta-testing/34091) via crow i2c
 * arc parameter control, LFOs
 * will think of some grid sequencing capabilities eventually
+
+### hardware support
+
+* ??? tbd
+* test hardware includes:
+    * [Sensel Morph](https://morph.sensel.com)
+    * [Keith McMillen QuNexus](https://www.keithmcmillen.com/products/qunexus/)
+    * [ExpressiveE Touché](https://www.expressivee.com/1-touche)
+    * [Arturia Keystep Pro](https://www.arturia.com/products/hybrid-synths/keystep-pro/overview)
 
 ### references/thanks
 
