@@ -33,10 +33,10 @@ specs.test2 = ControlSpec.new(0, 1, "lin", 0, 0.5, "")
 specs.test3 = ControlSpec.new(0, 1, "lin", 0, 0.5, "")
 
 local state = {}
-state.dots = {}
+state.notes = {}
 state.params = { 0.5, 0.5, 0.5 }
 for i=1,Prolepsis.voiceCount do
-  state.dots[i] = { x_coarse = 0, x_fine = 0, y = 0, r = 0, raw_note = 0, raw_x = 0, raw_y = 0, raw_z = 0, raw_vel = 0, active = false }
+  state.notes[i] = { x_coarse = 0, x_fine = 0, y = 0, r = 0, raw_note = 0, raw_x = 0, raw_y = 0, raw_z = 0, raw_vel = 0, active = false }
 end
 
 local key_is_held = {0,0,0}
@@ -61,40 +61,40 @@ function enc(n, delta)
   end
 end
 
-local function note_on(voice, note_num, vel)
-  engine.noteOn(voice, note_num, MusicUtil.note_num_to_freq(note_num), vel/127)
-  state.dots[voice].x_coarse = note_num/127
-  state.dots[voice].y = 0
-  state.dots[voice].r = vel/127
-  state.dots[voice].active = true
-  state.dots[voice].onset_time = util.time()
-  state.dots[voice].raw_note = note_num
-  state.dots[voice].raw_vel = vel  
+local function note_on(channel, note_num, vel)
+  engine.noteOn(channel, note_num, MusicUtil.note_num_to_freq(note_num), vel/127)
+  state.notes[channel].x_coarse = note_num/127
+  state.notes[channel].y = 0
+  state.notes[channel].r = vel/127
+  state.notes[channel].active = true
+  state.notes[channel].onset_time = util.time()
+  state.notes[channel].raw_note = note_num
+  state.notes[channel].raw_vel = vel  
 end
 
-local function note_off(voice, note_num, vel)
+local function note_off(channel, note_num, vel)
   engine.noteOff(voice, note_num, vel/127)
-  state.dots[voice].active = false
-  state.dots[voice].ended = true
-  state.dots[voice].raw_vel = vel
+  state.notes[channel].active = false
+  state.notes[channel].ended = true
+  state.notes[channel].raw_vel = vel
 end
 
-local function modulator_z(voice, raw, scaled)
-  engine.pressure(voice, scaled)
-  state.dots[voice].r = scaled
-  state.dots[voice].raw_z = raw
+local function modulator_z(channel, raw, scaled)
+  engine.pressure(channel, scaled)
+  state.notes[channel].r = scaled
+  state.notes[channel].raw_z = raw
 end
 
-local function modulator_x(voice, raw, scaled)
-  engine.pitchbend(voice, scaled)
-  state.dots[voice].x_fine = scaled
-  state.dots[voice].raw_x = raw
+local function modulator_x(channel, raw, scaled)
+  engine.pitchbend(channel, scaled)
+  state.notes[channel].x_fine = scaled
+  state.notes[channel].raw_x = raw
 end
 
-local function modulator_y(voice, raw, scaled)
-  engine.timbre(voice, scaled)
-  state.dots[voice].y = scaled
-  state.dots[voice].raw_y = raw
+local function modulator_y(channel, raw, scaled)
+  engine.timbre(channel, scaled)
+  state.notes[channel].y = scaled
+  state.notes[channel].raw_y = raw
 end
 
 local function midi_event(data)
@@ -147,14 +147,14 @@ function init()
     midi_in_device.event = midi_event
   end}
 
-  channel_mode_list = {"MPE low zone", "MPE high zone", "rotating", "omni"}
+  channel_mode_list = {"mpe low zone", "mpe high zone", "omni"}
   for i = 1,16 do
     table.insert(channel_mode_list, "channel "..i)
   end
   params:add{type = "option", id = "channel_mode", name = "channel mode", default = 1, options = channel_mode_list}
 
-  modulator_list = {"MPE pitchbend", "MPE timbre", "MPE pressure", "poly pressure", "channel pressure", "pitchbend",}
-  for i = 2,120 do
+  modulator_list = {"pitchbend", "timbre", "poly pressure", "channel pressure", "off"}
+  for i = 1,127 do
     table.insert(modulator_list,"CC "..i)
   end
   params:add{type = "option", id = "mod_x", name = "mod X", options = modulator_list, default = 1}

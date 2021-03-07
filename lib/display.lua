@@ -47,7 +47,7 @@ end
 
 function draw_debug()
   local active_voices = {}
-  for voice, data in pairs(state.dots) do
+  for voice, data in pairs(state.notes) do
     if data.active == true then
       table.insert(active_voices, {voice, data.onset_time})
     end
@@ -56,7 +56,7 @@ function draw_debug()
   h = 11
   for k, entry in pairs(active_voices) do
     voice = entry[1]
-    data = state.dots[voice]
+    data = state.notes[voice]
     str = voice .. "." .. 
       string.format("%02x",data.raw_note) .. ".".. 
       string.format("%02x",data.raw_x) .. "." .. 
@@ -78,7 +78,7 @@ function draw_ripples()
   offset = 0
   shift = false
   if shift then
-    for k, dot in pairs(state.dots) do
+    for k, dot in pairs(state.notes) do
       if dot.ended == true then
         dot.ended = false
         offset = offset + 1
@@ -89,7 +89,7 @@ function draw_ripples()
   screen.blend_mode('xor')
   screen.line_width(1)
   screen.level(math.random(2,3))
-  for k, dot in pairs(state.dots) do
+  for k, dot in pairs(state.notes) do
     if dot.active then
       screen.circle((dot.x_coarse + 0.2 * dot.x_fine - 0.25) * 2.5 * 128, 16 + (1 - dot.y) * 48, dot.r * 10)
     end
@@ -101,7 +101,7 @@ function draw_ripples()
   screen.aa(1)
   screen.blend_mode('add')
   screen.level(math.random(13,15))
-  for k, dot in pairs(state.dots) do
+  for k, dot in pairs(state.notes) do
     if dot.active then
       screen.circle((dot.x_coarse + 0.2 * dot.x_fine - 0.25) * 2.5 * 128, 16 + (1 - dot.y) * 48, dot.r * 10)
     end
