@@ -125,8 +125,8 @@ local function midi_event(data)
       if data[2] == 74 then
         modulator_y(channel, data[3], data[3] / 127)
       end
-    end
 
+    end
 end
 
 

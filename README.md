@@ -15,9 +15,9 @@ Medford, MA, USA
 ## todo
 
 * ~~change name~~
-* fix danging synth voices
-* load new wavetables from params menu
+* ~~fix danging synth voices~~
 * hook up pitchbend
+* load new wavetables from params menu
 * implement simple synth architecture and basic controlspecs/params (osc, filter, chorus)
 * make everything work with non-MPE voice allocation
 * move MPE logic out of main script into a lua library

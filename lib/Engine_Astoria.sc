@@ -4,13 +4,12 @@
 
 Engine_Astoria : CroneEngine {
 
+  var numVoices = 8;
   var voiceGroup;
-  var numChannels = 8;
-  var channelGroups;
+  var voiceList;
   var channelControlBuses;
 
   var wavetableBuffers;
-
 
   *new { arg context, doneCallback;
     ^super.new(context, doneCallback);
@@ -18,13 +17,12 @@ Engine_Astoria : CroneEngine {
 
   alloc {
     voiceGroup = ParGroup.tail(context.xg);
-    channelGroups = numChannels collect: { Group.tail(voiceGroup) };
-    channelControlBuses = numChannels collect: {
+    voiceList = Array.fill(numVoices, {|i| nil});
+    channelControlBuses = numVoices collect: {
       #[
         timbre,
         pressure,
         pitchbend,
-        release
       ].collect { |sym|
           var bus = Bus.control;
           bus.set(0);
@@ -52,20 +50,20 @@ Engine_Astoria : CroneEngine {
       //   freq: freq + 0.5
       // );
       env = Env.adsr(
-        attackTime: vel.linexp(0, 1.0, 0.25, 0.05), 
-        decayTime: vel.linexp(0, 1.0, 0.125, 0.05), 
+        attackTime: vel.linexp(0, 1.0, 0.25, 0.08), 
+        decayTime: vel.linexp(0, 1.0, 0.125, 0.08), 
         sustainLevel: vel.linexp(0, 1.0, 1.0, 0.7), 
         releaseTime: release
       );
       amp = EnvGen.kr(
         envelope: env, 
         gate: gate, 
-        levelScale: vel.linexp(0, 1.0, 1.0, 1.3),
+        levelScale: vel.linexp(0, 1.0, 0.7, 1.0),
         doneAction: Done.freeSelf
       );
       signal = oscA; // 0.75 * oscA + 0.25 * oscB;
       mix = Pan2.ar(
-        in: tanh(signal * amp.dbamp * (0.15 + 0.85 * pressure)).softclip, 
+        in: tanh(signal * amp * (0.15 + 0.85 * pressure)).softclip, 
         pos: pan
       );
       Out.ar(
@@ -94,8 +92,17 @@ Engine_Astoria : CroneEngine {
       var synth = Synth.new(
         "wave", 
         synthArgs, 
-        target: channelGroups[channelnum]
-      );
+        target: voiceGroup
+      ).onFree({ 
+        voiceList.remove(synth); 
+      });
+
+      if(voiceList[channelnum].notNil, {
+        voiceList[channelnum].set(\gate, 0);
+        voiceList[channelnum] = nil;
+      });
+
+      voiceList[channelnum] = synth;
 
       // attach MPE channel continuous control buses
       channelControlBuses[channelnum].keysValuesDo({|key, value|
@@ -107,8 +114,11 @@ Engine_Astoria : CroneEngine {
       var channelnum = msg[1];
       var note = msg[2];
       var release = msg[3];
-      channelControlBuses[channelnum][\release].setSynchronous(release.linexp(0, 1.0, 7.0, 0.05));
-      channelGroups[channelnum].set(\gate, 0);
+      if(voiceList[channelnum].notNil, {
+        voiceList[channelnum].set(\release, release.linexp(0, 1.0, 7.0, 0.05));
+        voiceList[channelnum].set(\gate, 0);
+        voiceList[channelnum] = nil;
+      });
     });
 
     this.addCommand("timbre", "if", { |msg|
@@ -165,7 +175,6 @@ Engine_Astoria : CroneEngine {
   free {
     voiceGroup.free;
     wavetableBuffers.do(_.free);
-    channelGroups.do(_.free);
     channelControlBuses.do({|dict| dict do: _.free });
   }
 }
