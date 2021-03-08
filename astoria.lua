@@ -73,9 +73,8 @@ local function note_on(channel, note_num, vel)
 end
 
 local function note_off(channel, note_num, vel)
-  engine.noteOff(voice, note_num, vel/127)
+  engine.noteOff(channel, note_num, vel/127)
   state.notes[channel].active = false
-  state.notes[channel].ended = true
   state.notes[channel].raw_vel = vel
 end
 
@@ -118,7 +117,19 @@ local function midi_event(data)
     elseif data[1] & 0xf0 == 0xe0 then
       -- msg.type == "pitchbend" 
       val = data[2] + (data[3] << 7)
-      modulator_x(channel, val, (val - 8192) / 8192)
+      deadzone = params:get("pitchbend_deadzone") 
+      local semitones
+      if deadzone >= math.abs(0x2000 - val) then
+        val = 0x2000
+        semitones = 0
+      elseif val < 0x2000 then 
+        val = val + deadzone
+        semitones = params:get("pitchbend_sensitivity") * -((0x2000 - val) / (0x2000 - deadzone))
+      else
+        val = val - deadzone
+        semitones = params:get("pitchbend_sensitivity") * ((val - 0x2000) / (0x1FFF - deadzone))
+      end
+      modulator_x(channel, val, semitones)
 
     elseif data[1] & 0xf0 == 0xb0 then 
       -- msg.type == "cc" 
@@ -127,6 +138,7 @@ local function midi_event(data)
       end
 
     end
+
 end
 
 
@@ -160,6 +172,9 @@ function init()
   params:add{type = "option", id = "mod_x", name = "mod X", options = modulator_list, default = 1}
   params:add{type = "option", id = "mod_y", name = "mod Y", options = modulator_list, default = 2}
   params:add{type = "option", id = "mod_z", name = "mod Z", options = modulator_list, default = 3}
+  params:add{type = "number", id = "pitchbend_sensitivity", name = "pitch bend semitones", min = 1, max = 96, default = 2}
+  params:add{type = "number", id = "pitchbend_deadzone", name = "pitch bend deadzone", min = 0, max = 512, default = 0}
+
 
   params:add_separator("output")
 

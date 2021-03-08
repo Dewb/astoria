@@ -46,22 +46,22 @@ function redraw()
 end
 
 function draw_debug()
-  local active_voices = {}
-  for voice, data in pairs(state.notes) do
+  active_voices = {}
+  for key, data in pairs(state.notes) do
     if data.active == true then
-      table.insert(active_voices, {voice, data.onset_time})
+      table.insert(active_voices, {key, data.onset_time})
     end
   end
   -- todo: sort by onset_time?
-  h = 11
+  local h = 11
   for k, entry in pairs(active_voices) do
-    voice = entry[1]
-    data = state.notes[voice]
-    str = voice .. "." .. 
-      string.format("%02x",data.raw_note) .. ".".. 
-      string.format("%02x",data.raw_x) .. "." .. 
-      string.format("%02x",data.raw_y) .. "." .. 
-      string.format("%02x",data.raw_z)
+    local v = entry[1]
+    local n = state.notes[v]
+    local str = v .. "." .. 
+      string.format("%02x",n.raw_note) .. ".".. 
+      string.format("%02x",n.raw_x) .. "." .. 
+      string.format("%02x",n.raw_y) .. "." .. 
+      string.format("%02x",n.raw_z)
     screen.move(0,h)
     screen.font_face(67)
     screen.text(str)
@@ -91,7 +91,7 @@ function draw_ripples()
   screen.level(math.random(2,3))
   for k, dot in pairs(state.notes) do
     if dot.active then
-      screen.circle((dot.x_coarse + 0.2 * dot.x_fine - 0.25) * 2.5 * 128, 16 + (1 - dot.y) * 48, dot.r * 10)
+      screen.circle((dot.x_coarse + 0.1 * dot.x_fine - 0.25) * 2.5 * 128, 16 + (1 - dot.y) * 48, dot.r * 10)
     end
     screen.stroke()
   end
@@ -103,7 +103,7 @@ function draw_ripples()
   screen.level(math.random(13,15))
   for k, dot in pairs(state.notes) do
     if dot.active then
-      screen.circle((dot.x_coarse + 0.2 * dot.x_fine - 0.25) * 2.5 * 128, 16 + (1 - dot.y) * 48, dot.r * 10)
+      screen.circle((dot.x_coarse + 0.1 * dot.x_fine - 0.25) * 2.5 * 128, 16 + (1 - dot.y) * 48, dot.r * 10)
     end
     screen.stroke()
   end

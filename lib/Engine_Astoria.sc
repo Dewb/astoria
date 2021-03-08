@@ -4,7 +4,7 @@
 
 Engine_Astoria : CroneEngine {
 
-  var numVoices = 8;
+  var numVoices = 17;
   var voiceGroup;
   var voiceList;
   var channelControlBuses;
@@ -39,7 +39,7 @@ Engine_Astoria : CroneEngine {
   
       timbre = Lag.kr(timbre, lagAmount);
       pressure = Lag.kr(pressure, lagAmount);
-      pitchbend = Lag.kr(pitchbend, lagAmount);
+      freq = Lag.kr(freq * (1 + pitchbend), lagAmount);
 
       oscA = VOsc.ar(
         bufpos: Clip.ar(timbre, 0.0, 1.0).range(t0, t1), 
@@ -55,7 +55,7 @@ Engine_Astoria : CroneEngine {
         sustainLevel: vel.linexp(0, 1.0, 1.0, 0.7), 
         releaseTime: release
       );
-      amp = EnvGen.kr(
+      amp = EnvGen.ar(
         envelope: env, 
         gate: gate, 
         levelScale: vel.linexp(0, 1.0, 0.7, 1.0),
@@ -114,9 +114,14 @@ Engine_Astoria : CroneEngine {
       var channelnum = msg[1];
       var note = msg[2];
       var release = msg[3];
-      if(voiceList[channelnum].notNil, {
-        voiceList[channelnum].set(\release, release.linexp(0, 1.0, 7.0, 0.05));
-        voiceList[channelnum].set(\gate, 0);
+      var synth = voiceList[channelnum];
+      if(synth.notNil, {
+        synth.set(\release, release.linexp(0, 1.0, 7.0, 0.05));
+        // remove continuous control buses from synth
+        channelControlBuses[channelnum].keysValuesDo({|key, value|
+          synth.set(key, 0) // todo: this should really set to current value, but get(key) causes glitches
+			  });
+        synth.set(\gate, 0);
         voiceList[channelnum] = nil;
       });
     });
@@ -136,7 +141,7 @@ Engine_Astoria : CroneEngine {
     this.addCommand("pitchbend", "if", { |msg|
       var channelnum = msg[1];
       var value = msg[2];
-      channelControlBuses[channelnum][\pitchbend].set(value);
+      channelControlBuses[channelnum][\pitchbend].set(2 ** (value/12));
     });
 
     this.addCommand("loadTable", "i", { |msg|

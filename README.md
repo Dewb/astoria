@@ -16,7 +16,7 @@ Medford, MA, USA
 
 * ~~change name~~
 * ~~fix danging synth voices~~
-* hook up pitchbend
+* ~~~hook up pitchbend~~~
 * load new wavetables from params menu
 * implement simple synth architecture and basic controlspecs/params (osc, filter, chorus)
 * make everything work with non-MPE voice allocation
