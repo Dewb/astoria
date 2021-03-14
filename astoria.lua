@@ -35,9 +35,7 @@ specs.test3 = ControlSpec.new(0, 1, "lin", 0, 0.5, "")
 local state = {}
 state.notes = {}
 state.params = { 0.5, 0.5, 0.5 }
-for i=1,Astoria.voiceCount do
-  state.notes[i] = { x_coarse = 0, x_fine = 0, y = 0, r = 0, raw_note = 0, raw_x = 0, raw_y = 0, raw_z = 0, raw_vel = 0, active = false }
-end
+
 
 local key_is_held = {0,0,0}
 function key(n, z)
@@ -62,6 +60,9 @@ function enc(n, delta)
 end
 
 local function note_on(channel, note_num, vel)
+  if params:get("velocity_as_pressure") == 2 then
+    engine.pressure(channel, vel/127)
+  end
   engine.noteOn(channel, note_num, MusicUtil.note_num_to_freq(note_num), vel/127)
   state.notes[channel].x_coarse = note_num/127
   state.notes[channel].y = 0
@@ -135,28 +136,48 @@ local function midi_event(data)
       -- msg.type == "cc" 
       if data[2] == 74 then
         modulator_y(channel, data[3], data[3] / 127)
+      elseif data[2] == 1 then
+        modulator_z(channel, data[3], data[3] / 127)
       end
-
     end
 
 end
 
+function setup_midi()
+  if midi_in_device then
+    midi_in_device.event = nil
+  end
+
+  for i=1,Astoria.voiceCount do
+    engine.pitchbend(i, 0.0)
+    engine.pressure(i, 0.0)
+    engine.timbre(i, 0.0)
+    state.notes[i] = { x_coarse = 0, x_fine = 0, y = 0, r = 0, raw_note = 0, raw_x = 0, raw_y = 0, raw_z = 0, raw_vel = 0, active = false }
+  end
+
+  midi_in_device = midi.connect(params:get("midi_device"))
+  midi_in_device.event = midi_event
+
+end
 
 function init()
 
   engine.loadTable(0);
-
+  print("setting up params")
+  setup_params()
+  print("setting up midi")
+  setup_midi()
+  print("starting display")
   Display.init(state)
 
-  midi_in_device = midi.connect(1)
-  midi_in_device.event = midi_event
+end
+
+function setup_params()
 
   params:add_separator("input")
 
   params:add{type = "number", id = "midi_device", name = "midi device", min = 1, max = 4, default = 1, action = function(value)
-    midi_in_device.event = nil
-    midi_in_device = midi.connect(value)
-    midi_in_device.event = midi_event
+    setup_midi()
   end}
 
   channel_mode_list = {"mpe low zone", "mpe high zone", "omni"}
@@ -174,7 +195,7 @@ function init()
   params:add{type = "option", id = "mod_z", name = "mod Z", options = modulator_list, default = 3}
   params:add{type = "number", id = "pitchbend_sensitivity", name = "pitch bend semitones", min = 1, max = 96, default = 2}
   params:add{type = "number", id = "pitchbend_deadzone", name = "pitch bend deadzone", min = 0, max = 512, default = 0}
-
+  params:add{type = "option", id = "velocity_as_pressure", name = "velocity is init pressure", options = {"off", "on"}, default = 1}
 
   params:add_separator("output")
 

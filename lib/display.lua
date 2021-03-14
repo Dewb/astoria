@@ -59,7 +59,7 @@ function draw_debug()
     local n = state.notes[v]
     local str = v .. "." .. 
       string.format("%02x",n.raw_note) .. ".".. 
-      string.format("%02x",n.raw_x) .. "." .. 
+      string.format("%04x",n.raw_x) .. "." .. 
       string.format("%02x",n.raw_y) .. "." .. 
       string.format("%02x",n.raw_z)
     screen.move(0,h)

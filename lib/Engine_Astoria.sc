@@ -8,6 +8,7 @@ Engine_Astoria : CroneEngine {
   var voiceGroup;
   var voiceList;
   var channelControlBuses;
+  var mixerBus;
 
   var wavetableBuffers;
 
@@ -29,13 +30,13 @@ Engine_Astoria : CroneEngine {
           sym -> bus
       }.asDict
     };
+    mixerBus = Bus.audio(context.server, 2);
         
     SynthDef("wave", {|gate, out, table_min, table_max, freq, vel, pan, timbre, pressure, pitchbend, release|
-
       var lagAmount = 0.001;
       var t0 = table_min+0.1;
       var t1 = table_max-0.1;
-      var oscA, oscB, env, amp, signal, mix;
+      var oscA, oscB, ring, noise, env, amp, signal, mix;
   
       timbre = Lag.kr(timbre, lagAmount);
       pressure = Lag.kr(pressure, lagAmount);
@@ -49,6 +50,8 @@ Engine_Astoria : CroneEngine {
       //   bufpos: Clip.ar(timbre, 0.0, 1.0).range(t0 + 0.2, t1 - 0.2), 
       //   freq: freq + 0.5
       // );
+      // ring = oscA * oscB;
+      // noise = PinkNoise.ar();
       env = Env.adsr(
         attackTime: vel.linexp(0, 1.0, 0.25, 0.08), 
         decayTime: vel.linexp(0, 1.0, 0.125, 0.08), 
@@ -61,7 +64,7 @@ Engine_Astoria : CroneEngine {
         levelScale: vel.linexp(0, 1.0, 0.7, 1.0),
         doneAction: Done.freeSelf
       );
-      signal = oscA; // 0.75 * oscA + 0.25 * oscB;
+      signal = 0.5 * oscA; // + 0.5 * oscB;
       mix = Pan2.ar(
         in: tanh(signal * amp * (0.15 + 0.85 * pressure)).softclip, 
         pos: pan
@@ -72,6 +75,17 @@ Engine_Astoria : CroneEngine {
       );
     }).add;
 
+    SynthDef("mixer", {
+			arg in, out, amp = 0.5;
+			var signal;
+
+			signal = In.ar(in, 2) * 0.4 * amp;
+			signal = tanh(signal).softclip;
+
+			Out.ar(bus: out, channelsArray: signal);
+
+		}).play(target:context.xg, args: [\in, mixerBus, \out, context.out_b], addAction: \addToTail);
+
     this.addCommand("noteOn", "iiff", { |msg|
       var channelnum = msg[1];
       var note = msg[2];
@@ -81,7 +95,7 @@ Engine_Astoria : CroneEngine {
       // initial args for this note
       var synthArgs = [
         \gate, 1,
-        \out, context.out_b,
+        \out, mixerBus,
         \table_min, wavetableBuffers.first.bufnum,
         \table_max, wavetableBuffers.last.bufnum,
         \freq, freq,
@@ -117,9 +131,8 @@ Engine_Astoria : CroneEngine {
       var synth = voiceList[channelnum];
       if(synth.notNil, {
         synth.set(\release, release.linexp(0, 1.0, 7.0, 0.05));
-        // remove continuous control buses from synth
-        channelControlBuses[channelnum].keysValuesDo({|key, value|
-          synth.set(key, 0) // todo: this should really set to current value, but get(key) causes glitches
+        channelControlBuses[channelnum].keysValuesDo({|key, bus|
+          synth.set(key, bus.getSynchronous()) // detach the bus, but keep the value
 			  });
         synth.set(\gate, 0);
         voiceList[channelnum] = nil;
@@ -145,7 +158,7 @@ Engine_Astoria : CroneEngine {
     });
 
     this.addCommand("loadTable", "i", { |msg|
-      var tableSize = 16;
+      var tableSize = 24;
       var wavetableArrays = Array.fill(tableSize, {arg i; 
         var inst = "hvoice";
         var root = this.class.filenameSymbol.asString.dirname ++ "/wavetables";
