@@ -4,7 +4,7 @@
 
 Engine_Astoria : CroneEngine {
 
-  var numVoices = 17;
+  var numVoices = 30;
   var voiceGroup;
   var voiceList;
   var channelControlBuses;
@@ -19,7 +19,7 @@ Engine_Astoria : CroneEngine {
   alloc {
     voiceGroup = ParGroup.tail(context.xg);
     voiceList = Array.fill(numVoices, {|i| nil});
-    channelControlBuses = numVoices collect: {
+    channelControlBuses = 16 collect: {
       #[
         timbre,
         pressure,
@@ -139,10 +139,20 @@ Engine_Astoria : CroneEngine {
       });
     });
 
+    this.addCommand("noteOffAll", "", { |msg|
+			voiceGroup.set(\gate, 0);
+			voiceList.do({|v| v.gate = 0; });
+		});
+
     this.addCommand("timbre", "if", { |msg|
       var channelnum = msg[1];
       var value = msg[2];
       channelControlBuses[channelnum][\timbre].set(value);
+    });
+
+    this.addCommand("timbreAll", "f", { |msg|
+      var value = msg[1];
+      channelControlBuses.do({|b| b[\timbre].set(value); });
     });
 
     this.addCommand("pressure", "if", { |msg|
@@ -151,13 +161,23 @@ Engine_Astoria : CroneEngine {
       channelControlBuses[channelnum][\pressure].set(value);
     });
 
+    this.addCommand("pressureAll", "f", { |msg|
+      var value = msg[1];
+      channelControlBuses.do({|b| b[\pressure].set(value); });
+    });
+
     this.addCommand("pitchbend", "if", { |msg|
       var channelnum = msg[1];
       var value = msg[2];
       channelControlBuses[channelnum][\pitchbend].set(2 ** (value/12));
     });
 
-    this.addCommand("loadTable", "i", { |msg|
+    this.addCommand("pitchbendAll", "f", { |msg|
+      var value = msg[1];
+      channelControlBuses.do({|b| b[\pitchbend].set(2 ** (value/12)); });
+    });
+
+    this.addCommand("loadTableFromFolder", "i", { |msg|
       var tableSize = 24;
       var wavetableArrays = Array.fill(tableSize, {arg i; 
         var inst = "hvoice";
@@ -186,6 +206,38 @@ Engine_Astoria : CroneEngine {
       });
 
       "loaded tables".postln;
+    });
+
+    this.addCommand("loadTableFromWaveEditFile", "is", { |msg|
+      var tableSize = 64;
+      var waveFrames = 256;
+      var wavePath = msg[2].asString.standardizePath;
+      //var inst = "bees";
+      //var root = this.class.filenameSymbol.asString.dirname ++ "/wavetables";
+      //var wavePath = (root ++ "/astoria/" ++ inst ++ ".wav").standardizePath;
+      var f = SoundFile.openRead(wavePath);
+      if (f.notNil) {
+        var wavetableArrays = Array.fill(tableSize, {arg i; 
+            var a = FloatArray.newClear(waveFrames);
+            f.readData(a);
+            //a = a.resamp1(256); // should already be 256 samples
+            a = a.as(Signal).asWavetable(); // this doubles the size
+            a;
+        });
+        "Loaded wave %".format(wavePath).postln;
+        f.close;
+        wavetableBuffers = Buffer.allocConsecutive(tableSize, context.server, waveFrames * 2, 1, { |buf, i|
+          buf.sendCollection(wavetableArrays[i], 0, 0, { |buf|
+            buf.query.postln;
+            wavetableArrays[i].free;
+          });
+        });
+        "loaded tables".postln;
+
+      } {
+        "Failed to open %".format(wavePath).warn;
+        nil;
+      }
     });
 
   }

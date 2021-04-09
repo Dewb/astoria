@@ -162,7 +162,9 @@ end
 
 function init()
 
-  engine.loadTable(0);
+  --engine.loadTableFromFolder(0);
+  engine.loadTableFromWaveEditFile(0, "~/dust/code/astoria/lib/wavetables/astoria/bees.wav");
+  
   print("setting up params")
   setup_params()
   print("setting up midi")
@@ -190,12 +192,17 @@ function setup_params()
   for i = 1,127 do
     table.insert(modulator_list,"CC "..i)
   end
-  params:add{type = "option", id = "mod_x", name = "mod X", options = modulator_list, default = 1}
-  params:add{type = "option", id = "mod_y", name = "mod Y", options = modulator_list, default = 2}
-  params:add{type = "option", id = "mod_z", name = "mod Z", options = modulator_list, default = 3}
+  params:add{type = "option", id = "pitchbend_poly_source", name = "pitchbend", options = modulator_list, default = 1}
+  params:add{type = "option", id = "timbre_poly_source", name = "timbre", options = modulator_list, default = 2}
+  params:add{type = "option", id = "pressure_poly_source", name = "pressure", options = modulator_list, default = 3}
   params:add{type = "number", id = "pitchbend_sensitivity", name = "pitch bend semitones", min = 1, max = 96, default = 2}
   params:add{type = "number", id = "pitchbend_deadzone", name = "pitch bend deadzone", min = 0, max = 512, default = 0}
   params:add{type = "option", id = "velocity_as_pressure", name = "velocity is init pressure", options = {"off", "on"}, default = 1}
+
+  params:add{type = "option", id = "pitchbend_global_source", name = "global pitchbend", options = modulator_list, default = 1}
+  params:add{type = "option", id = "timbre_global_source", name = "global timbre", options = modulator_list, default = 2}
+  params:add{type = "option", id = "pressure_global_source", name = "global pressure", options = modulator_list, default = 3}
+
 
   params:add_separator("output")
 
