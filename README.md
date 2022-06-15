@@ -16,16 +16,20 @@ Medford, MA, USA
 
 * ~~change name~~
 * ~~fix danging synth voices~~
-* ~~~hook up pitchbend~~~
-* load new wavetables from params menu
-* implement simple synth architecture and basic controlspecs/params (osc, filter, chorus)
-* make everything work with non-MPE voice allocation
+* ~~hook up pitchbend~~
+* ~~support WaveEdit wavetables ~~
+* ~~support AKWF wavetables ~~
+* support Serum wavetables (mostly done?)
+* load wavetables from params menu / file browser/importer (may need to specify format)
+* implement initial mvp synth architecture and basic controlspecs/params (osc, filter, chorus)
+* make everything also work with regular MIDI controllers with non-MPE voice allocation
 * move MPE logic out of main script into a lua library
 * prepare preview release
 * implement rest of synth architecture (2x wavetable osc, sub osc, 2x filter + chorus per voice)
 * implement full synth parameters and mod matrix, expose to norns knobs/params
-* fix dropped note offs (might require norns midi changes)
-* crow
+* implement anti-aliasing
+* fix dropped note offs with sensel morph (probably requires norns core changes, 5 touch bottleneck at 1000 Hz)
+* crow outputs
 
 ## project core goals
 
@@ -35,7 +39,7 @@ Medford, MA, USA
    * sound and parameterization inspired by the architecture of classic wavetable hardware synthesizers from the 1990s
    * a modest built-in set of algorithmically generated and file-based wavetables 
    * plus, allow users to self-install their own single-cycle wavetable collections
-* MPE expression to control voltage via [crow]()
+* convert MPE expression to control voltage via [crow]()
 
 ## project probable eventual goals
 
