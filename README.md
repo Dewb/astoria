@@ -8,17 +8,16 @@ Medford, MA, USA
 
 ## WARNINGS:
 
-* ~ *work in progress* ~
+* ~ *incomplete work in progress* ~
 * first supercollider project, expect nonsense
-* name not final
 
 ## todo
 
 * ~~change name~~
 * ~~fix danging synth voices~~
 * ~~hook up pitchbend~~
-* ~~support WaveEdit wavetables ~~
-* ~~support AKWF wavetables ~~
+* ~~support WaveEdit wavetables~~
+* ~~support AKWF wavetables~~
 * support Serum wavetables (mostly done?)
 * load wavetables from params menu / file browser/importer (may need to specify format)
 * implement initial mvp synth architecture and basic controlspecs/params (osc, filter, chorus)
